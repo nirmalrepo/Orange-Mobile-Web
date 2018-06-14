@@ -7,11 +7,42 @@ $(document).ready(function ($) {
 
 		this.construct = function () {
 			this.getPhonesByTypesOrCategories();
+			this.getPhoneDetails()
 			this.getFeaturedPhoneList();
 			this.getPhoneCategires();
 
 		}
+		this.getPhoneDetails = function () {
+			if (checkQueryStringExists('ID')) {
+				var productID = getURLParameter('ID');
+				var productType = jQuery("#product-type");
+				var warrentyOrCondition = jQuery('#warrenty-or-condition');
+				jQuery.getJSON('http://localhost:60064/api/phone/GetPhoneDetailsById?ID='+productID).done(function (data) {
+					console.log(data)
+					jQuery("#product-image").attr("src","themes/images/products/"+data.Image);
+					jQuery("div.item a, #gallery a").attr("href","themes/images/products/"+data.Image);
+					jQuery("div.item img").attr("src","themes/images/products/"+data.Image);
+					jQuery("#product-name, #product-breadcrumb").html(data.Name);
+					jQuery("#product-price").html('$'+ data.ItemPrice);
+					jQuery('#product-color').html(data.Color);
+					jQuery('#product-description').html(data.Description);
+					if(data.Availability == 'Available'){
+						jQuery("#product-availability").html("In Stock").css("color", "blue");
+					}else{
+						jQuery("#product-availability").html("Out of Stock").css("color", "red");
+						jQuery('#order-now').hide();
+					}
+					if(data.Type == 'N'){
+						productType.html('New');
+						warrentyOrCondition.html('<span>Warrenty: '+data.Warrenty+'</span>');
+					}else{
+						productType.html('Used');
+						warrentyOrCondition.html('<span>Condition: '+data.Condition+'</span>');
+					}
+				});
 
+			} 
+		}
 		this.getPhonesByTypesOrCategories = function () {
 			if (checkQueryStringExists('Type')) {
 				getPhonesByType();
@@ -152,7 +183,7 @@ $(document).ready(function ($) {
 			'<div class="span3 alignR">'+
 			'<form class="form-horizontal qtyFrm">'+
 			'<h3> $'+data.ItemPrice+'</h3>'+
-									  			  '<a href="product_details.html" class="btn btn-large"><i class="icon-zoom-in"></i></a>'+
+									  			  '<a href="product_details.html?ID='+data.ID+'" class="btn btn-large"><i class="icon-zoom-in"></i></a>'+
 			'</form>'+
 			'</div>'+
 		'</div>'+
@@ -178,13 +209,13 @@ $(document).ready(function ($) {
 			return '<li class="span3">' +
 				'<div class="thumbnail">' +
 				'<i class="tag"></i>' +
-				'<a href="product_details.html">' +
+				'<a href="product_details.html?ID='+data.ID+'">' +
 				'<img src="themes/images/products/' + data.Image + '" alt="">' +
 				'</a>' +
 				'<div class="caption">' +
 				'<h5>' + data.Name + '</h5>' +
 				'<h4>' +
-				'<a class="btn" href="product_details.html">VIEW</a>' +
+				'<a class="btn" href="product_details.html?ID='+data.ID+'">VIEW</a>' +
 				' <span class="pull-right">$' + data.ItemPrice + '</span>' +
 				'</h4>' +
 				'</div>' +
@@ -195,11 +226,11 @@ $(document).ready(function ($) {
 		var constructLatestHTML = function (data) {
 			return '<li class="span3">' +
 				'<div class="thumbnail">' +
-				'<a  href="product_details.html"><img src="themes/images/products/' + data.Image + '" alt=""/></a>' +
+				'<a  href="product_details.html?ID='+data.ID+'"><img src="themes/images/products/' + data.Image + '" alt=""/></a>' +
 				'<div class="caption">' +
 				'<h5>' + data.Name + '</h5>' +
 				'<p> Lorem Ipsum is simply dummy text. </p>' +
-				'<h4 style="text-align:center"><a class="btn" href="product_details.html"> <i class="icon-zoom-in"></i></a><a class="btn" href="#" style="visibility:hidden">Add to <i class="icon-shopping-cart"></i></a><a class="btn btn-primary" href="#">$' + data.ItemPrice + '</a></h4>' +
+				'<h4 style="text-align:center"><a class="btn" href="product_details.html?ID='+data.ID+'"> <i class="icon-zoom-in"></i></a><a class="btn" href="#" style="visibility:hidden">Add to <i class="icon-shopping-cart"></i></a><a class="btn btn-primary" href="#">$' + data.ItemPrice + '</a></h4>' +
 				'</div>' +
 				'</div>' +
 				'</li>'
