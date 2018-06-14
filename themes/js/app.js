@@ -6,12 +6,63 @@ $(document).ready(function ($) {
 		var phoneHalfLength, firstHalf, secondHalf, latestProducts;
 
 		this.construct = function () {
-			this.getPhoneList();
+			this.getPhonesByTypesOrCategories();
+			this.getFeaturedPhoneList();
 			this.getPhoneCategires();
 
 		}
 
-		this.getPhoneList = function () {
+		this.getPhonesByTypesOrCategories = function () {
+			if (checkQueryStringExists('Type')) {
+				getPhonesByType();
+			} else if (checkQueryStringExists('categoryId')) {
+				getPhonesByCategory();
+			}
+		}
+
+		var checkQueryStringExists = function (param) {
+			var queryString = '&' + (document.location + '?').split('?')[1];
+			if (queryString.match(param)) {
+				return true;
+			}
+			else {
+				return false;
+			}
+
+		}
+		var getURLParameter = function (sParam) {
+			var sPageURL = window.location.search.substring(1);
+			var sURLVariables = sPageURL.split('&');
+			for (var i = 0; i < sURLVariables.length; i++) {
+				var sParameterName = sURLVariables[i].split('=');
+				if (sParameterName[0] == sParam) {
+					return sParameterName[1];
+				}
+			}
+		}
+		var getPhonesByType = function () {
+			var parameter = getURLParameter('Type')
+			jQuery('.srchTxt').val(parameter);
+			if (parameter == 'A') {
+				jQuery.getJSON('http://localhost:60064/api/phone/GetPhoneList').done(function (data) {
+					setProductListOnProductsPage(data);
+				});
+			} else {
+				jQuery.getJSON('http://localhost:60064/api/phone/GetPhoneListByType?Type=' + parameter).done(function (data) {
+					setProductListOnProductsPage(data)
+				});
+			}
+
+		}
+		var getPhonesByCategory = function () {
+			var parameter = getURLParameter('categoryId')
+			jQuery.getJSON('http://localhost:60064/api/phone/GetPhoneListByCategory?CategoryID=' + parameter).done(function (data) {
+				setProductListOnProductsPage(data)
+			});
+
+
+		}
+		this.getFeaturedPhoneList = function () {
 			jQuery.getJSON('http://localhost:60064/api/phone/GetPhoneList').done(function (data) {
 
 				latestProducts = data;
@@ -37,6 +88,12 @@ $(document).ready(function ($) {
 		}
 		this.construct();
 
+		var setProductListOnProductsPage = function(phones){
+			jQuery.each(phones, function (key, data) {
+				jQuery('#listView').append(constructProductListViewHTML(data))
+				jQuery('#blockView ul').append(constructProductListGridHTML(data))
+			})
+		}
 		var getFirstHalfFeatured = function (firstHalf) {
 			jQuery.each(firstHalf, function (key, data) {
 				jQuery('#firstSetOfFeaturedProducts').append(constructFeaturedHTML(data))
@@ -51,7 +108,6 @@ $(document).ready(function ($) {
 		}
 
 		var getLatestProducts = function (latestProducts) {
-			console.log(latestProducts)
 			jQuery.each(latestProducts, function (key, data) {
 
 				jQuery('#latestProducts').append(constructLatestHTML(data))
@@ -70,16 +126,54 @@ $(document).ready(function ($) {
 
 			})
 		}
-		var getURLParameter = function (sParam) {
-			var sPageURL = window.location.search.substring(1);
-			var sURLVariables = sPageURL.split('&');
-			for (var i = 0; i < sURLVariables.length; i++) {
-				var sParameterName = sURLVariables[i].split('=');
-				if (sParameterName[0] == sParam) {
-					return sParameterName[1];
-				}
+
+		var constructProductListViewHTML = function (data){
+			var type = "New";
+			if(data.Type == 'N'){
+				 type = "New"
+			}else{
+				type = "Old"
 			}
+			return '<div class="row">'+	  
+			'<div class="span2">'+	
+				'<img src="themes/images/products/'+data.Image+'" alt=""/>'+
+			'</div>'+
+			'<div class="span4">'+
+				'<h3>'+type +'| '+data.Availability+'</h3>'+			
+				'<hr class="soft"/>'+
+				'<h5>'+data.Name+' </h5>'+
+				'<p>'+
+				'Nowadays the  industry is one of the most successful business spheres.We always stay in touch with the latest fashion tendencies -'+
+				'that is why our goods are so popular.'+
+				'</p>'+
+				'<a class="btn btn-small pull-right" href="product_details.html?ID='+data.ID+'">View Details</a>'+
+				'<br class="clr"/>'+
+			'</div>'+
+			'<div class="span3 alignR">'+
+			'<form class="form-horizontal qtyFrm">'+
+			'<h3> $'+data.ItemPrice+'</h3>'+
+									  			  '<a href="product_details.html" class="btn btn-large"><i class="icon-zoom-in"></i></a>'+
+			'</form>'+
+			'</div>'+
+		'</div>'+
+		'<hr class="soft"/>'
 		}
+
+		var constructProductListGridHTML = function(data){
+			return '<li class="span3">'+
+			'<div class="thumbnail">'+
+			  '<a href="product_details.html?ID='+data.ID+'"><img src="themes/images/products/'+data.Image+'" alt=""/></a>'+
+			  '<div class="caption">'+
+				'<h5>'+data.Name+'</h5>'+
+				'<p>'+
+				  'Im a paragraph. Click here'+
+				'</p>'+
+				 '<h4 style="text-align:center"><a class="btn" href="product_details.html?ID='+data.ID+'"> <i class="icon-zoom-in"></i></a> <a class="btn" style="visibility:hidden" href="#">Add to <i class="icon-shopping-cart"></i></a> <a class="btn btn-primary" href="#">$'+data.ItemPrice+'</a></h4>'+
+			  '</div>'+
+			'</div>'+
+		  '</li>'
+		}
+
 		var constructFeaturedHTML = function (data) {
 			return '<li class="span3">' +
 				'<div class="thumbnail">' +
@@ -111,15 +205,17 @@ $(document).ready(function ($) {
 				'</li>'
 		}
 
-		// var  getURLParameter = function (sParam)
-		// {
-		// 	console.log('sss')
-		// }​
 
 	}
 
 
 	var myApp = new myApp();
+
+	$('#submitButton').click(function (e) {
+		e.preventDefault();
+		var slectedType = $('.srchTxt').val();
+		window.location.href = "products.html?Type=" + slectedType;
+	});
 	// var data = {
 	// 	Name: 'Shane',
 	// 	Email: 'shane@mailinator.com',
