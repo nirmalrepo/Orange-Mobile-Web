@@ -3,7 +3,7 @@ $(document).ready(function ($) {
 	var myApp = function ($) {
 		var phoneList = {};
 		var phoneCategoryList = {};
-		var phoneHalfLength, firstHalf, secondHalf;
+		var phoneHalfLength, firstHalf, secondHalf, latestProducts;
 
 		this.construct = function () {
 			this.getPhoneList();
@@ -13,13 +13,18 @@ $(document).ready(function ($) {
 
 		this.getPhoneList = function () {
 			jQuery.getJSON('http://localhost:60064/api/phone/GetPhoneList').done(function (data) {
-				phoneList = data
+
+				latestProducts = data;
+				getLatestProducts(latestProducts);
+				phoneList = data;
+
 				phoneHalfLength = Math.ceil(phoneList.length / 2);
 				firstHalf = phoneList.splice(0, phoneHalfLength);
 				secondHalf = phoneList;
 
 				getFirstHalfFeatured(firstHalf);
 				getSecondHalfFeatured(secondHalf);
+
 			});
 		}
 
@@ -42,6 +47,14 @@ $(document).ready(function ($) {
 			jQuery.each(secondHalf, function (key, data) {
 
 				jQuery('#secondSetOfFeaturedProducts').append(constructFeaturedHTML(data))
+			})
+		}
+
+		var getLatestProducts = function (latestProducts) {
+			console.log(latestProducts)
+			jQuery.each(latestProducts, function (key, data) {
+
+				jQuery('#latestProducts').append(constructLatestHTML(data))
 			})
 		}
 
@@ -80,6 +93,19 @@ $(document).ready(function ($) {
 				'<a class="btn" href="product_details.html">VIEW</a>' +
 				' <span class="pull-right">$' + data.ItemPrice + '</span>' +
 				'</h4>' +
+				'</div>' +
+				'</div>' +
+				'</li>'
+		}
+
+		var constructLatestHTML = function (data) {
+			return '<li class="span3">' +
+				'<div class="thumbnail">' +
+				'<a  href="product_details.html"><img src="themes/images/products/' + data.Image + '" alt=""/></a>' +
+				'<div class="caption">' +
+				'<h5>' + data.Name + '</h5>' +
+				'<p> Lorem Ipsum is simply dummy text. </p>' +
+				'<h4 style="text-align:center"><a class="btn" href="product_details.html"> <i class="icon-zoom-in"></i></a><a class="btn" href="#" style="visibility:hidden">Add to <i class="icon-shopping-cart"></i></a><a class="btn btn-primary" href="#">$' + data.ItemPrice + '</a></h4>' +
 				'</div>' +
 				'</div>' +
 				'</li>'

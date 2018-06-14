@@ -109,3 +109,6 @@
 .phoneCategories li a.active{
     color: green !important;
 }
+#latestProducts i.tag{
+    display: none !important;
+}
