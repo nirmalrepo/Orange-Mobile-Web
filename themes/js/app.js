@@ -10,38 +10,38 @@ $(document).ready(function ($) {
 			this.getPhoneDetails()
 			this.getFeaturedPhoneList();
 			this.getPhoneCategires();
-
 		}
 		this.getPhoneDetails = function () {
 			if (checkQueryStringExists('ID')) {
 				var productID = getURLParameter('ID');
 				var productType = jQuery("#product-type");
 				var warrentyOrCondition = jQuery('#warrenty-or-condition');
-				jQuery.getJSON('http://localhost:60064/api/phone/GetPhoneDetailsById?ID='+productID).done(function (data) {
-					console.log(data)
-					jQuery("#product-image").attr("src","themes/images/products/"+data.Image);
-					jQuery("div.item a, #gallery a").attr("href","themes/images/products/"+data.Image);
-					jQuery("div.item img").attr("src","themes/images/products/"+data.Image);
+				jQuery.getJSON('http://localhost:60064/api/phone/GetPhoneDetailsById?ID=' + productID).done(function (data) {
+					jQuery("#product-image").attr("src", "themes/images/products/" + data.Image);
+					jQuery("div.item a, #gallery a").attr("href", "themes/images/products/" + data.Image);
+					jQuery("div.item img").attr("src", "themes/images/products/" + data.Image);
 					jQuery("#product-name, #product-breadcrumb").html(data.Name);
-					jQuery("#product-price").html('$'+ data.ItemPrice);
+					jQuery("#product-price").html('$' + data.ItemPrice);
 					jQuery('#product-color').html(data.Color);
 					jQuery('#product-description').html(data.Description);
-					if(data.Availability == 'Available'){
+					jQuery('#product-id').val(data.ID);
+					jQuery('#product-amount-modal').val(data.ItemPrice);
+					if (data.Availability == 'Available') {
 						jQuery("#product-availability").html("In Stock").css("color", "blue");
-					}else{
+					} else {
 						jQuery("#product-availability").html("Out of Stock").css("color", "red");
 						jQuery('#order-now').hide();
 					}
-					if(data.Type == 'N'){
+					if (data.Type == 'N') {
 						productType.html('New');
-						warrentyOrCondition.html('<span>Warrenty: '+data.Warrenty+'</span>');
-					}else{
+						warrentyOrCondition.html('<span>Warrenty: ' + data.Warrenty + '</span>');
+					} else {
 						productType.html('Used');
-						warrentyOrCondition.html('<span>Condition: '+data.Condition+'</span>');
+						warrentyOrCondition.html('<span>Condition: ' + data.Condition + '</span>');
 					}
 				});
 
-			} 
+			}
 		}
 		this.getPhonesByTypesOrCategories = function () {
 			if (checkQueryStringExists('Type')) {
@@ -117,9 +117,45 @@ $(document).ready(function ($) {
 				setPhoneCategories(phoneCategoryList);
 			});
 		}
+
+		this.validateOrderForm = function (Name, Email) {
+			if (Name == "" || Email == "") {
+				alert('Please complete all the fields');
+				return false;
+			} else if (!isEmail(Email)) {
+				alert('Email is not valid');
+				return false;
+			} else {
+				return true
+			}
+		}
+
+		this.createOrder = function (data) {
+
+			jQuery.ajax({
+				type: 'POST',
+				url: 'http://localhost:60064/api/phone/PostOrder',
+				dataType: "json",
+				data: data,
+				crossDomain: true,
+				success: function (response) {
+					var message = getSwalMessage(response)
+					jQuery('#order').modal('toggle');
+					swal(message.title, response, message.type)
+						.then((value) => {
+							window.location = "index.html";
+						});
+				},
+				error: function (error) {
+					swal("Sorry!", "You order can not be completed. Try Again!", "error");
+					console.log(error);
+				}
+
+			})
+		}
 		this.construct();
 
-		var setProductListOnProductsPage = function(phones){
+		var setProductListOnProductsPage = function (phones) {
 			jQuery.each(phones, function (key, data) {
 				jQuery('#listView').append(constructProductListViewHTML(data))
 				jQuery('#blockView ul').append(constructProductListGridHTML(data))
@@ -158,64 +194,64 @@ $(document).ready(function ($) {
 			})
 		}
 
-		var constructProductListViewHTML = function (data){
+		var constructProductListViewHTML = function (data) {
 			var type = "New";
-			if(data.Type == 'N'){
-				 type = "New"
-			}else{
+			if (data.Type == 'N') {
+				type = "New"
+			} else {
 				type = "Old"
 			}
-			return '<div class="row">'+	  
-			'<div class="span2">'+	
-				'<img src="themes/images/products/'+data.Image+'" alt=""/>'+
-			'</div>'+
-			'<div class="span4">'+
-				'<h3>'+type +'| '+data.Availability+'</h3>'+			
-				'<hr class="soft"/>'+
-				'<h5>'+data.Name+' </h5>'+
-				'<p>'+
-				'Nowadays the  industry is one of the most successful business spheres.We always stay in touch with the latest fashion tendencies -'+
-				'that is why our goods are so popular.'+
-				'</p>'+
-				'<a class="btn btn-small pull-right" href="product_details.html?ID='+data.ID+'">View Details</a>'+
-				'<br class="clr"/>'+
-			'</div>'+
-			'<div class="span3 alignR">'+
-			'<form class="form-horizontal qtyFrm">'+
-			'<h3> $'+data.ItemPrice+'</h3>'+
-									  			  '<a href="product_details.html?ID='+data.ID+'" class="btn btn-large"><i class="icon-zoom-in"></i></a>'+
-			'</form>'+
-			'</div>'+
-		'</div>'+
-		'<hr class="soft"/>'
+			return '<div class="row">' +
+				'<div class="span2">' +
+				'<img src="themes/images/products/' + data.Image + '" alt=""/>' +
+				'</div>' +
+				'<div class="span4">' +
+				'<h3>' + type + '| ' + data.Availability + '</h3>' +
+				'<hr class="soft"/>' +
+				'<h5>' + data.Name + ' </h5>' +
+				'<p>' +
+				'Nowadays the  industry is one of the most successful business spheres.We always stay in touch with the latest fashion tendencies -' +
+				'that is why our goods are so popular.' +
+				'</p>' +
+				'<a class="btn btn-small pull-right" href="product_details.html?ID=' + data.ID + '">View Details</a>' +
+				'<br class="clr"/>' +
+				'</div>' +
+				'<div class="span3 alignR">' +
+				'<form class="form-horizontal qtyFrm">' +
+				'<h3> $' + data.ItemPrice + '</h3>' +
+				'<a href="product_details.html?ID=' + data.ID + '" class="btn btn-large"><i class="icon-zoom-in"></i></a>' +
+				'</form>' +
+				'</div>' +
+				'</div>' +
+				'<hr class="soft"/>'
 		}
 
-		var constructProductListGridHTML = function(data){
-			return '<li class="span3">'+
-			'<div class="thumbnail">'+
-			  '<a href="product_details.html?ID='+data.ID+'"><img src="themes/images/products/'+data.Image+'" alt=""/></a>'+
-			  '<div class="caption">'+
-				'<h5>'+data.Name+'</h5>'+
-				'<p>'+
-				  'Im a paragraph. Click here'+
-				'</p>'+
-				 '<h4 style="text-align:center"><a class="btn" href="product_details.html?ID='+data.ID+'"> <i class="icon-zoom-in"></i></a> <a class="btn" style="visibility:hidden" href="#">Add to <i class="icon-shopping-cart"></i></a> <a class="btn btn-primary" href="#">$'+data.ItemPrice+'</a></h4>'+
-			  '</div>'+
-			'</div>'+
-		  '</li>'
+		var constructProductListGridHTML = function (data) {
+			return '<li class="span3">' +
+				'<div class="thumbnail">' +
+				'<a href="product_details.html?ID=' + data.ID + '"><img src="themes/images/products/' + data.Image + '" alt=""/></a>' +
+				'<div class="caption">' +
+				'<h5>' + data.Name + '</h5>' +
+				'<p>' +
+				'Im a paragraph. Click here' +
+				'</p>' +
+				'<h4 style="text-align:center"><a class="btn" href="product_details.html?ID=' + data.ID + '"> <i class="icon-zoom-in"></i></a> <a class="btn" style="visibility:hidden" href="#">Add to <i class="icon-shopping-cart"></i></a> <a class="btn btn-primary" href="#">$' + data.ItemPrice + '</a></h4>' +
+				'</div>' +
+				'</div>' +
+				'</li>'
 		}
 
 		var constructFeaturedHTML = function (data) {
 			return '<li class="span3">' +
 				'<div class="thumbnail">' +
 				'<i class="tag"></i>' +
-				'<a href="product_details.html?ID='+data.ID+'">' +
+				'<a href="product_details.html?ID=' + data.ID + '">' +
 				'<img src="themes/images/products/' + data.Image + '" alt="">' +
 				'</a>' +
 				'<div class="caption">' +
 				'<h5>' + data.Name + '</h5>' +
 				'<h4>' +
-				'<a class="btn" href="product_details.html?ID='+data.ID+'">VIEW</a>' +
+				'<a class="btn" href="product_details.html?ID=' + data.ID + '">VIEW</a>' +
 				' <span class="pull-right">$' + data.ItemPrice + '</span>' +
 				'</h4>' +
 				'</div>' +
@@ -226,14 +262,34 @@ $(document).ready(function ($) {
 		var constructLatestHTML = function (data) {
 			return '<li class="span3">' +
 				'<div class="thumbnail">' +
-				'<a  href="product_details.html?ID='+data.ID+'"><img src="themes/images/products/' + data.Image + '" alt=""/></a>' +
+				'<a  href="product_details.html?ID=' + data.ID + '"><img src="themes/images/products/' + data.Image + '" alt=""/></a>' +
 				'<div class="caption">' +
 				'<h5>' + data.Name + '</h5>' +
 				'<p> Lorem Ipsum is simply dummy text. </p>' +
-				'<h4 style="text-align:center"><a class="btn" href="product_details.html?ID='+data.ID+'"> <i class="icon-zoom-in"></i></a><a class="btn" href="#" style="visibility:hidden">Add to <i class="icon-shopping-cart"></i></a><a class="btn btn-primary" href="#">$' + data.ItemPrice + '</a></h4>' +
+				'<h4 style="text-align:center"><a class="btn" href="product_details.html?ID=' + data.ID + '"> <i class="icon-zoom-in"></i></a><a class="btn" href="#" style="visibility:hidden">Add to <i class="icon-shopping-cart"></i></a><a class="btn btn-primary" href="#">$' + data.ItemPrice + '</a></h4>' +
 				'</div>' +
 				'</div>' +
 				'</li>'
+		}
+
+		var isEmail = function (email) {
+			var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+			return regex.test(email);
+		}
+
+		var getSwalMessage = function (response) {
+			var message = {
+				title: "Thank You!",
+				type: "success"
+			};
+			var successMessage = "Your order is completed.";
+			if (response != successMessage) {
+				message.title = "Sorry!"
+				message.type = "error"
+			}
+
+			return message;
+
 		}
 
 
@@ -247,27 +303,27 @@ $(document).ready(function ($) {
 		var slectedType = $('.srchTxt').val();
 		window.location.href = "products.html?Type=" + slectedType;
 	});
-	// var data = {
-	// 	Name: 'Shane',
-	// 	Email: 'shane@mailinator.com',
-	// 	ProductId: '4',
-	// 	Amount: '600'
-	// }
 
-	// $.ajax({
-	// 	type: 'POST',
-	// 	url: 'http://localhost:60064/api/phone/PostOrder',
-	// 	dataType: "json",
-	// 	data: data,
-	// 	crossDomain: true,
-	// 			success: function( response ) {
-	// 		console.log( response ); // server response
-	// 	},
-	// 	error: function(error){
-	// 		console.log(error);
-	// 	}
+	$('#order-now-ok').click(function (e) {
+		e.preventDefault();
+		var Name = $('#inputName').val();
+		var Email = $('#inputEmail').val();
+		var ProductId = $('#product-id').val();
+		var Amount = $("#product-amount-modal").val();
+		var isValid = myApp.validateOrderForm(Name, Email);
 
-	// })
+		if (isValid) {
+			var data = {
+				Name: Name,
+				Email: Email,
+				ProductId: ProductId,
+				Amount: Amount
+			}
+			myApp.createOrder(data)
+		}
+
+	});
+
 
 });
 
